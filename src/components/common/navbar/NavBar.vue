@@ -24,6 +24,7 @@ export default {
   height: 40px;
   line-height: 40px;
   text-align: center;
+  box-shadow: 0 0 10px rgb(0, 0, 0, 0.1);
 }
 .slot-left,
 .slot-right {

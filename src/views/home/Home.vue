@@ -5,18 +5,25 @@
         <div>购物街</div>
       </template>
     </nav-bar>
+    <tab-control
+      v-show="isTabFixed"
+      class="tab-control"
+      :titles="titles"
+      @tabClick="tabClick"
+      ref="tabControl1"
+    />
     <scroll
       ref="scroll"
-      class="content"
+      class="scroll-content"
       :probe-type="3"
       @scroll="contentScroll"
       :pull-up-load="true"
       @pullingUp="loadMore"
     >
-      <home-swiper v-if="swiperShow" :banners="banners" />
+      <home-swiper @swiperImageLoad="swiperImageLoad" v-if="swiperShow" :banners="banners" />
       <feature-view />
       <recommend-view :recommends="recommends" />
-      <tab-control class="tab-control" :titles="titles" @tabClick="tabClick" />
+      <tab-control :titles="titles" @tabClick="tabClick" ref="tabControl2" />
       <goods-list :goods="showGoods" />
     </scroll>
     <back-top @click.native="backClick" v-show="isShowBackTop" />
@@ -28,13 +35,13 @@ import NavBar from 'components/common/navbar/NavBar'
 import TabControl from 'components/content/tabControl/TabControl'
 import GoodsList from 'components/content/goods/GoodsList'
 import Scroll from 'components/common/scroll/Scroll'
-import BackTop from 'components/content/backTop/BackTop'
 
 import HomeSwiper from 'views/home/childComps/HomeSwiper'
 import FeatureView from 'views/home/childComps/FeatureView'
 import RecommendView from 'views/home/childComps/RecommendView'
 
 import { getHomeMultiData, getHomeGoods } from 'network/home'
+import { itemLisenerMixin, backTopMixin } from 'common/mixin'
 
 export default {
   name: 'Home',
@@ -43,18 +50,19 @@ export default {
     TabControl,
     GoodsList,
     Scroll,
-    BackTop,
     HomeSwiper,
     FeatureView,
     RecommendView
   },
+  mixins: [itemLisenerMixin, backTopMixin],
   data () {
     return {
       banners: [],
       recommends: [],
       currentType: 'pop',
       swiperShow: false,
-      isShowBackTop: false,
+      isTabFixed: false,
+      tabControlOffsetTop: 0,
       titles: ['流行', '新款', '精选'],
       goods: {
         'pop': { page: 0, list: [] },
@@ -68,13 +76,30 @@ export default {
       return this.goods[this.currentType].list
     }
   },
+  unmounted () {
+    console.log('destroyed')
+  },
+  mounted () { },
+  activated () {
+    this.$refs.scroll.refresh()
+    this.$refs.scroll.scrollTo(0, this.saveY, 0)
+  },
+  deactivated () {
+    this.saveY = this.$refs.scroll.getScollY()
+
+    this.$bus.off('itemImageLoad', this.itemImgLisener)
+  },
   created () {
     this.getHomeMultiData()
     this.getHomeGoods('pop')
     this.getHomeGoods('new')
     this.getHomeGoods('sell')
   },
+
   methods: {
+    swiperImageLoad () {
+      this.tabControlOffsetTop = this.$refs.tabControl2.$el.offsetTop
+    },
     tabClick (index) {
       switch (index) {
         case 0:
@@ -87,12 +112,13 @@ export default {
           this.currentType = 'sell'
           break
       }
+      this.$refs.tabControl1.currentIndex = index
+      this.$refs.tabControl2.currentIndex = index
     },
-    backClick () {
-      this.$refs.scroll.scrollTo(0, 0)
-    },
+
     contentScroll (position) {
       this.isShowBackTop = (-position.y) > 1000
+      this.isTabFixed = (-position.y) > this.tabControlOffsetTop
     },
     loadMore () {
       this.getHomeGoods(this.currentType)
@@ -127,19 +153,13 @@ export default {
 .nav-bar {
   background-color: var(--color-tint);
   color: #fff;
-  position: fixed;
-  left: 0;
-  right: 0;
-  top: 0;
-  z-index: 9;
 }
 .tab-control {
-  position: sticky;
-  top: 44px;
+  position: relative;
   z-index: 9;
 }
 
-.content {
+.scroll-content {
   overflow: hidden;
   position: absolute;
   top: 40px;

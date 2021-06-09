@@ -1,5 +1,5 @@
 <template>
-  <div id="home-swiper">
+  <div class="home-swiper">
     <div class="swiper" @touchstart="touchStart" @touchmove="touchMove" @touchend="touchEnd">
       <slot></slot>
     </div>
@@ -49,8 +49,10 @@ export default {
     }
   },
   mounted () {
-    this.handelDom()
-    this.startTimer()
+    setTimeout(() => {
+      this.handelDom()
+      this.startTimer()
+    }, 300)
   },
   methods: {
     startTimer () {
@@ -88,18 +90,21 @@ export default {
       this.swiperStyle['-ms-transform'] = `translateX(${postion}px)`
     },
     handelDom () {
-      let swiperEl = document.querySelector('.swiper')
-      let slidesEls = swiperEl.querySelectorAll('.slide')
-      this.slideCount = slidesEls.length
-      if (this.slideCount > 1) {
-        let cloneFirst = slidesEls[0].cloneNode(true)
-        let cloneLast = slidesEls[this.slideCount - 1].cloneNode(true)
-        swiperEl.insertBefore(cloneLast, slidesEls[0])
-        swiperEl.appendChild(cloneFirst)
-        this.totalWidth = swiperEl.offsetWidth
-        this.swiperStyle = swiperEl.style
-      }
-      this.setTransform(-this.totalWidth)
+      setTimeout(() => {
+        let swiperEl = document.querySelector('.swiper')
+        let slidesEls = swiperEl.querySelectorAll('.slide')
+        this.slideCount = slidesEls.length
+        if (this.slideCount > 1) {
+          let cloneFirst = slidesEls[0].cloneNode(true)
+          let cloneLast = slidesEls[this.slideCount - 1].cloneNode(true)
+          swiperEl.insertBefore(cloneLast, slidesEls[0])
+          swiperEl.appendChild(cloneFirst)
+          this.totalWidth = swiperEl.offsetWidth
+          this.swiperStyle = swiperEl.style
+        }
+        this.setTransform(-this.totalWidth)
+      }, 300)
+
     },
     touchStart (e) {
       if (this.scrolling) return
@@ -137,7 +142,7 @@ export default {
 
 </script>
 <style scoped>
-#home-swiper {
+.home-swiper {
   overflow: hidden;
   position: relative;
 }
